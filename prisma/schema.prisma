@@ -1,0 +1,113 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+model cliente {
+  idCliente    String     @id @default(uuid()) @db.Char(40)
+  nomeCompleto String     @db.VarChar(100)
+  cpf          String     @db.VarChar(11)
+  datNasc      DateTime
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  endereco     endereco[]
+  compra       compra[]
+
+  @@map("cliente")
+}
+
+model endereco {
+  idEndereco       String   @id @default(uuid()) @db.Char(40)
+  endCompleto      String   @db.VarChar(200)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  clientes         cliente  @relation(fields: [clienteIdCliente], references: [idCliente])
+  clienteIdCliente String   @db.Char(40)
+  compra           compra[]
+
+  @@map("endereco")
+}
+
+model compra {
+  idCompra           String        @id @default(uuid()) @db.Char(40)
+  valorCompra        Decimal       @db.Decimal(9, 2)
+  formapag           Decimal       @db.Decimal(9, 2)
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+  clientes           cliente       @relation(fields: [clienteIdCliente], references: [idCliente])
+  clienteIdCliente   String        @db.Char(40)
+  enderecos          endereco      @relation(fields: [enderecoIdEndereco], references: [idEndereco])
+  enderecoIdEndereco String        @db.Char(40)
+  itemProduto        itemProduto[]
+
+  @@map("compra")
+}
+
+model itemProduto {
+  idItem           String   @id @default(uuid()) @db.Char(40)
+  qtdeItem         Int      @db.Int
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  compras          compra   @relation(fields: [compraIdCompra], references: [idCompra])
+  compraIdCompra   String   @db.Char(40)
+  produtos         Produto  @relation(fields: [produtoIdProduto], references: [idProduto])
+  produtoIdProduto String   @db.Char(40)
+
+  @@map("itemProduto")
+}
+
+//obs:uui cria um id aleatorio
+model Produto {
+  idProduto            String        @id @default(uuid()) @db.Char(40)
+  nomeProduto          String        @unique @db.VarChar(100)
+  modeloProduto        String        @unique @db.VarChar(100)
+  precoBase            Decimal       @db.Decimal(9, 2)
+  estoque              Int           @db.Int
+  createdAt            DateTime      @default(now()) @map("created_at")
+  updatedAt            DateTime      @updatedAt @map("updated_at")
+  categorias           categoria     @relation(fields: [categoriaIdCategoria], references: [idCategoria])
+  categoriaIdCategoria String        @db.Char(40)
+  itemProduto          itemProduto[]
+  numserie             numserie[]
+
+  @@map("produto")
+}
+
+model categoria {
+  idCategoria   String         @id @default(uuid()) @db.Char(40)
+  nomeCategoria String         @unique @db.VarChar(100)
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  Produto       Produto[]
+  subcategoria  subcategoria[]
+
+  @@map("categoria")
+}
+
+model subcategoria {
+  nomeCategoria        String    @unique @db.VarChar(100)
+  DescricaoCategoria   String    @unique @db.VarChar(100)
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+  categorias           categoria @relation(fields: [categoriaIdCategoria], references: [idCategoria])
+  categoriaIdCategoria String    @db.Char(40)
+
+  @@map("subcategoria")
+}
+
+model numserie {
+  numserie         String   @unique @db.VarChar(100)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  produtos         Produto  @relation(fields: [produtoIdProduto], references: [idProduto])
+  produtoIdProduto String   @db.Char(40)
+
+  @@map("numserie")
+}
+
+//banco
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
